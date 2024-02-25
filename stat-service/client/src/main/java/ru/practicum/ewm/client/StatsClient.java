@@ -8,6 +8,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.ewm.dto.EndpointHitDto;
+import ru.practicum.ewm.dto.ViewStatsDto;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -31,13 +32,13 @@ public class StatsClient extends BaseClient {
         );
     }
 
-    public ResponseEntity<Object> createHit(String app, String uri, String ip, String timestamp) {
+    public ResponseEntity<EndpointHitDto> createHit(String app, String uri, String ip, String timestamp) {
         EndpointHitDto hit = new EndpointHitDto(app, uri, ip, LocalDateTime.parse(timestamp));
 
         return post("/hit", hit);
     }
 
-    public ResponseEntity<Object> getStats(String start, String end, List<String> uris, Boolean unique) {
+    public ResponseEntity<List<ViewStatsDto>> getStats(String start, String end, List<String> uris, Boolean unique) {
         Map<String, Object> parameters = new HashMap<>(Map.of("start", encode(start),
                 "end", encode(end),
                 "unique", unique));
