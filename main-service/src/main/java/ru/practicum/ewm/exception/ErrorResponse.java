@@ -34,7 +34,7 @@ public class ErrorResponse {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError dataIntegrityViolationException(DataIntegrityViolationException e) {
+    public ApiError dataIntegrityViolationException(final DataIntegrityViolationException e) {
         log.error("Вызвана ошибка уникальности - {}", e.getMessage());
         return ApiError.builder()
                 .status(HttpStatus.CONFLICT)
@@ -52,6 +52,19 @@ public class ErrorResponse {
                 .status(HttpStatus.NOT_FOUND)
                 .reason("Запращиваемый объект не найден")
                 .message(e.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(DateTimeViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError dateTimeViolationException(final DateTimeViolationException e) {
+        log.error("Вызвана ошибка валидации поля " + e.getField() + " - {}", e.getMessage());
+
+        return ApiError.builder()
+                .status(HttpStatus.CONFLICT)
+                .reason("Некорректное значение поля при запросе")
+                .message("Поле: " + e.getField() + " " + e.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
     }
