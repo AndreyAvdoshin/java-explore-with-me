@@ -22,7 +22,7 @@ public class Event {
     @Column(name = "annotation")
     private String annotation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
 
@@ -38,7 +38,7 @@ public class Event {
     @Column(name = "event_date")
     private LocalDateTime eventDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "initiator_id")
     private User initiator;
 
@@ -56,6 +56,10 @@ public class Event {
 
     @Column(name = "request_moderation")
     private boolean requestModeration;
+
+    @Column(name = "state")
+    @Enumerated(EnumType.STRING)
+    private State state;
 
     @Column(name = "title")
     private String title;

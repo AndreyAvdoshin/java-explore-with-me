@@ -5,6 +5,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.exception.DateTimeViolationException;
+import ru.practicum.ewm.exception.IncorrectParameterException;
+import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.NotOwnerException;
 import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.service.CategoryService;
@@ -13,6 +16,7 @@ import ru.practicum.ewm.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,12 +45,8 @@ public class EventServiceImpl implements EventService {
         event.setCategory(category);
         event = repository.save(event);
 
-        CategoryDto categoryDto = CategoryMapper.toCategoryDto(category);
-        UserShortDto userShortDto = UserMapper.toUserShortDto(initiator);
-
-
         log.info("Сохранение события - {}", event);
-        return EventMapper.toEventFullDto(event, userShortDto, categoryDto);
+        return EventMapper.toEventFullDto(event);
     }
 
     @Override
@@ -54,17 +54,43 @@ public class EventServiceImpl implements EventService {
         userService.checkExistingUser(userId);
         PageRequest page = PageRequest.of(from, size);
         List<Event> events = repository.findAllByInitiatorId(userId, page);
-        // необходимо написать перевод из собылия в список событий с коротким описанием
+
+        return events.stream().map(EventMapper::toEventFullDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public EventFullDto getEventByIdAndUserId(Long eventId, Long userId) {
+        Event event = checkEventBelongUser(eventId, userId);
+        return EventMapper.toEventFullDto(event);
+    }
+
+    @Override
+    public EventFullDto updateEventByIdAndUSerId(Long eventId, Long userId) {
 
     }
 
+
     private void checkEvent(Event event) {
         if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(2))) {
-            throw new DateTimeViolationException("eventDate",
+            throw new IncorrectParameterException("eventDate",
                     "Начало события должно быть не раньше, чем за 2 часа от текущего времени");
         } else if (event.getEventDate().isBefore(LocalDateTime.now())) {
-            throw new DateTimeViolationException("eventDate",
+            throw new IncorrectParameterException("eventDate",
                     "Начало события не может быть в прошлом");
         }
+    }
+
+    private Event returnIfExists(Long eventId) {
+        return repository.findById(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
+    }
+
+    private Event checkEventBelongUser(Long eventId, Long userId) {
+        userService.checkExistingUser(userId);
+        Event event = returnIfExists(eventId);
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new NotOwnerException("Пользователь по id - " + userId + " не является содателем события по id - " +
+                    userId);
+        }
+        return event;
     }
 }

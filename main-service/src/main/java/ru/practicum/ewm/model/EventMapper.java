@@ -19,30 +19,33 @@ public class EventMapper {
                 .paid(newEventDto.isPaid())
                 .participantLimit(newEventDto.getParticipantLimit())
                 .requestModeration(newEventDto.isRequestModeration())
+                .state(State.PENDING)
                 .title(newEventDto.getTitle())
                 .build();
     }
 
-    public static EventShortDto toEventShortDto(Event event, UserShortDto userShortDto, CategoryDto categoryDto) {
+    public static EventShortDto toEventShortDto(Event event) {
         return EventShortDto.builder()
                 .id(event.getId())
                 .annotation(event.getAnnotation())
+                .category(CategoryMapper.toCategoryDto(event.getCategory()))
                 .confirmedRequests(event.getConfirmedRequests())
                 .eventDate(event.getEventDate().format(FORMATTER))
+                .initiator(UserMapper.toUserShortDto(event.getInitiator()))
                 .paid(event.isPaid())
                 .title(event.getTitle())
                 .views(event.getViews())
                 .build();
     }
 
-    public static EventFullDto toEventFullDto(Event event, UserShortDto userShortDto, CategoryDto categoryDto) {
+    public static EventFullDto toEventFullDto(Event event) {
         return EventFullDto.fullDtoBuilder()
                 .annotation(event.getAnnotation())
-                .category(categoryDto)
+                .category(CategoryMapper.toCategoryDto(event.getCategory()))
                 .confirmedRequests(event.getConfirmedRequests())
                 .eventDate(event.getEventDate().format(FORMATTER))
                 .id(event.getId())
-                .initiator(userShortDto)
+                .initiator(UserMapper.toUserShortDto(event.getInitiator()))
                 .paid(event.isPaid())
                 .title(event.getTitle())
                 .views(event.getViews())

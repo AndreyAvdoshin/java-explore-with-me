@@ -56,9 +56,9 @@ public class ErrorResponse {
                 .build();
     }
 
-    @ExceptionHandler(DateTimeViolationException.class)
+    @ExceptionHandler(IncorrectParameterException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError dateTimeViolationException(final DateTimeViolationException e) {
+    public ApiError incorrectParameterException(final IncorrectParameterException e) {
         log.error("Вызвана ошибка валидации поля " + e.getField() + " - {}", e.getMessage());
 
         return ApiError.builder()

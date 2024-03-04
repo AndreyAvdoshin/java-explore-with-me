@@ -39,4 +39,18 @@ public class PrivateEventController {
                                                  @RequestParam(defaultValue = "10") @Positive int size) {
         return service.getEventsByUserId(userId, from, size);
     }
+
+    @GetMapping
+    @RequestMapping("/{eventId}")
+    public EventFullDto getEventByIdAndUserId(@PathVariable @Positive Long userId,
+                                              @PathVariable @Positive Long eventId) {
+        return service.getEventByIdAndUserId(eventId, userId);
+    }
+
+    @PatchMapping
+    @RequestMapping("/{eventId}")
+    public EventFullDto updateEventByIdAndUSerID(@PathVariable @Positive Long userId,
+                                                 @PathVariable @Positive Long eventId) {
+        return null; //service
+    }
 }
