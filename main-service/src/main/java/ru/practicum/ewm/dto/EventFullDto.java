@@ -1,15 +1,12 @@
 package ru.practicum.ewm.dto;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import ru.practicum.ewm.model.Location;
 import ru.practicum.ewm.model.State;
 import java.time.LocalDateTime;
 
 
 @Data
-@Builder
 @EqualsAndHashCode(callSuper = true)
 public class EventFullDto extends EventShortDto {
 
@@ -21,7 +18,7 @@ public class EventFullDto extends EventShortDto {
     private boolean requestModeration;
     private State state;
 
-    @Builder(builderMethodName = "fullDtoBuilder")
+    @Builder(builderMethodName = "eventFullDtoBuilder")
     public EventFullDto(String annotation,
                         CategoryDto category,
                         int confirmedRequests,

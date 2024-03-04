@@ -39,7 +39,7 @@ public class EventMapper {
     }
 
     public static EventFullDto toEventFullDto(Event event) {
-        return EventFullDto.fullDtoBuilder()
+        return EventFullDto.eventFullDtoBuilder()
                 .annotation(event.getAnnotation())
                 .category(CategoryMapper.toCategoryDto(event.getCategory()))
                 .confirmedRequests(event.getConfirmedRequests())
@@ -56,6 +56,8 @@ public class EventMapper {
                 .publishedOn(event.getPublishedOn())
                 .requestModeration(event.isRequestModeration())
                 .title(event.getTitle())
+                .state(event.getState())
                 .build();
     }
+
 }

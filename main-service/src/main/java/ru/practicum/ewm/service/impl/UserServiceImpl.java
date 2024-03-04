@@ -1,13 +1,11 @@
 package ru.practicum.ewm.service.impl;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.dto.NewUserRequest;
 import ru.practicum.ewm.dto.UserDto;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.exception.UniqueViolationException;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.model.UserMapper;
 import ru.practicum.ewm.repository.UserRepository;
@@ -28,7 +26,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(NewUserRequest userRequest) {
         User user = UserMapper.toUser(userRequest);
-        return UserMapper.toUserDto(user);
+        return UserMapper.toUserDto(repository.save(user));
     }
 
     @Override

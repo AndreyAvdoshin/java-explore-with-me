@@ -15,11 +15,11 @@ import javax.validation.constraints.Positive;
 @Validated
 @RestController
 @RequestMapping("/admin/categories")
-public class AdminCategoryController {
+public class CategoryController {
 
     private final CategoryService service;
 
-    public AdminCategoryController(CategoryService service) {
+    public CategoryController(CategoryService service) {
         this.service = service;
     }
 
