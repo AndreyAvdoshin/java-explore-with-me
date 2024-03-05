@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.dto.*;
-import ru.practicum.ewm.exception.IncorrectParameterException;
+import ru.practicum.ewm.exception.ConflictParameterException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.NotOwnerException;
 import ru.practicum.ewm.model.*;
@@ -84,14 +84,15 @@ public class EventServiceImpl implements EventService {
 
     private void checkEvent(Event event) {
         if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(2))) {
-            throw new IncorrectParameterException("eventDate",
+            throw new ConflictParameterException("eventDate",
                     "Начало события должно быть не раньше, чем за 2 часа от текущего времени");
         } else if (event.getEventDate().isBefore(LocalDateTime.now())) {
-            throw new IncorrectParameterException("eventDate", "Начало события не может быть в прошлом");
+            throw new ConflictParameterException("eventDate", "Начало события не может быть в прошлом");
         }
     }
 
-    private Event returnIfExists(Long eventId) {
+    @Override
+    public Event returnIfExists(Long eventId) {
         return repository.findById(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
     }
 
@@ -113,11 +114,11 @@ public class EventServiceImpl implements EventService {
 
         if (updateRequest.getEventDate() != null && !isAdmin &&
                 updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new IncorrectParameterException("eventDate",
+            throw new ConflictParameterException("eventDate",
                     "Начало события должно быть не раньше, чем за 2 часа от текущего времени");
         } else if (updateRequest.getEventDate() != null &&
                 updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-            throw new IncorrectParameterException("eventDate",
+            throw new ConflictParameterException("eventDate",
                     "Начало события должно быть не раньше, чем за 1 час от текущего времени");
         } else if (updateRequest.getEventDate() != null) {
             event.setEventDate(updateRequest.getEventDate());
@@ -152,7 +153,7 @@ public class EventServiceImpl implements EventService {
             switch (updateRequest.getStateAction()) {
                 case PUBLISH_EVENT:
                     if (event.getState() != State.PENDING) {
-                        throw new IncorrectParameterException("State", "Данное событие не готово к публикации");
+                        throw new ConflictParameterException("State", "Данное событие не готово к публикации");
                     }
                     event.setState(State.PUBLISHED);
                     break;

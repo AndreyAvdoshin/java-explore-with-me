@@ -1,10 +1,12 @@
 package ru.practicum.ewm.model;
 
+import lombok.experimental.UtilityClass;
 import ru.practicum.ewm.dto.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+@UtilityClass
 public class EventMapper {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

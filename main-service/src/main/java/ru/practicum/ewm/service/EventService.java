@@ -1,6 +1,7 @@
 package ru.practicum.ewm.service;
 
 import ru.practicum.ewm.dto.*;
+import ru.practicum.ewm.model.Event;
 
 import java.util.List;
 
@@ -15,5 +16,7 @@ public interface EventService {
     EventFullDto updateEventByIdAndUserId(Long eventId, Long userId, UpdateEventUserRequest updateEventUserRequest);
 
     EventFullDto updateEventByIdAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest);
+
+    Event returnIfExists(Long eventId);
 
 }
