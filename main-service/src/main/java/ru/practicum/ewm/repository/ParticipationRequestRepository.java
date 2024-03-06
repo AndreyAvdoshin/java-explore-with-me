@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ParticipationRequestRepository extends JpaRepository<ParticipationRequest, Long> {
 
-    ParticipationRequest findByEventIdAndRequesterId(Long eventId, Long userId);
+    //ParticipationRequest findByEventIdAndRequesterId(Long eventId, Long userId);
 
     int countAllByEventId(Long eventId);
 
