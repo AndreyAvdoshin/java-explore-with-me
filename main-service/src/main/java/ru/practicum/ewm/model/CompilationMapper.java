@@ -1,7 +1,11 @@
-package ru.practicum.ewm.dto;
+package ru.practicum.ewm.model;
 
 import lombok.experimental.UtilityClass;
+import ru.practicum.ewm.dto.CompilationDto;
+import ru.practicum.ewm.dto.NewCompilationDto;
 import ru.practicum.ewm.model.Compilation;
+
+import java.util.stream.Collectors;
 
 @UtilityClass
 public class CompilationMapper {
@@ -15,6 +19,9 @@ public class CompilationMapper {
     public static CompilationDto toCompilationDto(Compilation compilation) {
         return CompilationDto.builder()
                 .id(compilation.getId())
+                .events(compilation.getEvents().stream()
+                        .map(EventMapper::toEventShortDto)
+                        .collect(Collectors.toSet()))
                 .pinned(compilation.isPinned())
                 .title(compilation.getTitle())
                 .build();

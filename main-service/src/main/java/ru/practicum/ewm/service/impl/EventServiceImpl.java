@@ -11,6 +11,7 @@ import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.service.CategoryService;
 import ru.practicum.ewm.service.EventService;
+import ru.practicum.ewm.service.ParticipationRequestService;
 import ru.practicum.ewm.service.UserService;
 
 import java.time.LocalDateTime;
@@ -24,18 +25,20 @@ public class EventServiceImpl implements EventService {
     private final EventRepository repository;
     private final UserService userService;
     private final CategoryService categoryService;
+    private final ParticipationRequestService requestService;
 
     public EventServiceImpl(EventRepository repository, UserService userService,
-                            CategoryService categoryService) {
+                            CategoryService categoryService, ParticipationRequestService requestService) {
         this.repository = repository;
         this.userService = userService;
         this.categoryService = categoryService;
+        this.requestService = requestService;
     }
 
     @Override
     public EventFullDto createEvent(NewEventDto newEventDto, Long userId) {
         Event event = EventMapper.toEvent(newEventDto);
-        checkEvent(event);
+        checkEventDateTime(event);
 
         User initiator = userService.returnIfExists(userId);
         Category category = categoryService.returnIfExists(newEventDto.getCategory());
@@ -51,8 +54,9 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getEventsByUserId(Long userId, int from, int size) {
         userService.checkExistingUser(userId);
-        PageRequest page = PageRequest.of(from, size);
+        PageRequest page = PageRequest.of(from / size, size);
         List<Event> events = repository.findAllByInitiatorId(userId, page);
+
         log.info("Получение событий - {}", events);
         return events.stream().map(EventMapper::toEventFullDto).collect(Collectors.toList());
     }
@@ -60,6 +64,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto getEventByIdAndUserId(Long eventId, Long userId) {
         Event event = checkEventBelongUser(eventId, userId);
+
         log.info("Получение события - {}", event);
         return EventMapper.toEventFullDto(event);
     }
@@ -69,6 +74,7 @@ public class EventServiceImpl implements EventService {
                                                  UpdateEventUserRequest updateEventUserRequest) {
         Event event = checkEventBelongUser(eventId, userId);
         updateEvent(event, updateEventUserRequest, false);
+
         log.info("Опновление события - {}", event);
         return EventMapper.toEventFullDto(repository.save(event));
 
@@ -78,22 +84,35 @@ public class EventServiceImpl implements EventService {
     public EventFullDto updateEventByIdAdmin(Long eventId, UpdateEventAdminRequest updateRequest) {
         Event event = returnIfExists(eventId);
         updateEvent(event, updateRequest, true);
+
+        log.info("Обновление события администратором по id - {} - {}", eventId, updateRequest);
         return EventMapper.toEventFullDto(repository.save(event));
     }
 
+    @Override
+    public List<ParticipationRequestDto> getRequestsByUserAndEvent(Long userId, Long eventId) {
+        checkEventBelongUser(eventId, userId);
+        return requestService.getRequestsByEventId(eventId);
+    }
 
-    private void checkEvent(Event event) {
+    @Override
+    public EventRequestStatusUpdateResult updateRequestsStatusByUserAndEvent(Long userId, Long eventId) {
+        checkEventBelongUser(eventId, userId);
+        return null;
+    }
+
+    @Override
+    public Event returnIfExists(Long eventId) {
+        return repository.findById(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
+    }
+
+    private void checkEventDateTime(Event event) {
         if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(2))) {
             throw new ConflictParameterException("eventDate",
                     "Начало события должно быть не раньше, чем за 2 часа от текущего времени");
         } else if (event.getEventDate().isBefore(LocalDateTime.now())) {
             throw new ConflictParameterException("eventDate", "Начало события не может быть в прошлом");
         }
-    }
-
-    @Override
-    public Event returnIfExists(Long eventId) {
-        return repository.findById(eventId).orElseThrow(() -> new NotFoundException("Event", eventId));
     }
 
     private Event checkEventBelongUser(Long eventId, Long userId) {

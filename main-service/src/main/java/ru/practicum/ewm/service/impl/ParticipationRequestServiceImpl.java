@@ -12,7 +12,6 @@ import ru.practicum.ewm.service.ParticipationRequestService;
 import ru.practicum.ewm.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +33,18 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     @Override
     public List<ParticipationRequestDto> getRequests(Long userId) {
         List<ParticipationRequest> requests = repository.findAllByRequesterId(userId);
+        log.info("Возврат запросов пользователя по id - {} - {}", userId, requests);
+
+        return requests.stream()
+                .map(ParticipationRequestMapper::toParticipationRequestDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ParticipationRequestDto> getRequestsByEventId(Long eventId) {
+        List<ParticipationRequest> requests = repository.findAllByEventId(eventId);
+        log.info("Возврат запросов события по id - {} - {}", eventId, requests);
+
         return requests.stream()
                 .map(ParticipationRequestMapper::toParticipationRequestDto)
                 .collect(Collectors.toList());
@@ -59,8 +70,17 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .requester(requester)
                 .status(event.isRequestModeration() ? State.PENDING : State.CONFIRMED)
                 .build();
+
         log.info("Созранине запроса на участие в событии - {}", participationRequest);
         return ParticipationRequestMapper.toParticipationRequestDto(repository.save(participationRequest));
+    }
+
+    @Override
+    public List<ParticipationRequestDto> updateRequestsStatusByEvent(Long eventId) {
+        List<ParticipationRequest> requests = repository.findAllByEventId(eventId);
+
+        return  null;
+
     }
 
     @Override
@@ -73,6 +93,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         } else {
             request.setStatus(State.PENDING);
         }
+
         log.info("Сохранение отмененного запроса на участие - {}", request);
         return ParticipationRequestMapper.toParticipationRequestDto(repository.save(request));
 

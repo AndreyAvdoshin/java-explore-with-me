@@ -4,10 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.dto.EventFullDto;
-import ru.practicum.ewm.dto.EventShortDto;
-import ru.practicum.ewm.dto.NewEventDto;
-import ru.practicum.ewm.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.service.EventService;
 
 import javax.validation.Valid;
@@ -57,5 +54,23 @@ public class PrivateEventController {
         log.info("Запрос обновления события по id - {} пользователем с id - {} - {}",
                 eventId, userId, updateEventUserRequest);
         return service.updateEventByIdAndUserId(eventId, userId, updateEventUserRequest);
+    }
+
+    @GetMapping("/users/{userId}/events/{eventId}/requests")
+    public List<ParticipationRequestDto> getRequestsByUserAndEvent(@PathVariable @Positive Long userId,
+                                                                   @PathVariable @Positive Long eventId) {
+        log.info("Запрос получения запросов на участие в событии по id - {} пользователем по id - {}",
+                eventId, userId);
+        return service.getRequestsByUserAndEvent(userId, eventId);
+    }
+
+    @PatchMapping("/users/{userId}/events/{eventId}/requests")
+    public EventRequestStatusUpdateResult updateRequestsByUserAndEvent(
+            @RequestBody EventRequestStatusUpdateRequest updateRequest,
+            @PathVariable @Positive Long userId,
+            @PathVariable @Positive Long eventId) {
+        log.info("Запрос на обновления статусов запросов на событие по id - {} пользователем с id - {} - {}",
+                eventId, userId , updateRequest);
+        return service.updateRequestsStatusByUserAndEvent(userId, eventId);
     }
 }

@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.CompilationDto;
 import ru.practicum.ewm.dto.NewCompilationDto;
+import ru.practicum.ewm.dto.UpdateCompilationRequest;
 import ru.practicum.ewm.service.CompilationService;
 
 import javax.validation.Valid;
@@ -26,6 +27,13 @@ public class CompilationController {
     public CompilationDto createCompilation(@RequestBody @Valid NewCompilationDto newCompilationDto) {
         log.info("Запрос на создание подборки событий - {}", newCompilationDto);
         return service.createCompilation(newCompilationDto);
+    }
+
+    @PatchMapping("/{compId}")
+    public CompilationDto updateCompilation(@RequestBody @Valid UpdateCompilationRequest updateRequest,
+                                            @PathVariable @Positive Long compId) {
+        log.info("Запрос на изменение подборки по id - {} - {}", compId, updateRequest);
+        return service.updateCompilation(updateRequest, compId);
     }
 
     @DeleteMapping("/{compId}")

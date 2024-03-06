@@ -1,6 +1,6 @@
 package ru.practicum.ewm.service.impl;
 
-import org.springframework.data.domain.Page;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.dto.NewUserRequest;
@@ -14,6 +14,7 @@ import ru.practicum.ewm.service.UserService;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -26,13 +27,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(NewUserRequest userRequest) {
         User user = UserMapper.toUser(userRequest);
+        log.info("Создание пользователя - {}", user);
+
         return UserMapper.toUserDto(repository.save(user));
     }
 
     @Override
     public List<UserDto> getUsers(List<Long> ids, int from, int size) {
         PageRequest page = PageRequest.of(from / size, size);
-        Page<User> users = ids == null ? repository.findAll(page) : repository.findAllByIdIn(ids, page);
+        List<User> users = ids == null ? repository.findAll(page).getContent() : repository.findAllByIdIn(ids, page);
+        log.info("Возврат пользователей - {}", users);
+
         return users.stream()
                 .map(UserMapper::toUserDto)
                 .collect(Collectors.toList());
@@ -43,6 +48,7 @@ public class UserServiceImpl implements UserService {
         if (!repository.existsById(userId)) {
             throw new NotFoundException("User", userId);
         }
+        log.info("Удаление пользователя по id - {}", userId);
         repository.deleteById(userId);
     }
 

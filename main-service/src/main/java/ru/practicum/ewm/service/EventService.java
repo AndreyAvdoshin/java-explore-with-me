@@ -19,4 +19,8 @@ public interface EventService {
 
     Event returnIfExists(Long eventId);
 
+    List<ParticipationRequestDto> getRequestsByUserAndEvent(Long userId, Long eventId);
+
+    EventRequestStatusUpdateResult updateRequestsStatusByUserAndEvent(Long userId, Long eventId);
+
 }
