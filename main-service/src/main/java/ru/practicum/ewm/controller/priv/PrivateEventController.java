@@ -56,7 +56,7 @@ public class PrivateEventController {
         return service.updateEventByIdAndUserId(eventId, userId, updateEventUserRequest);
     }
 
-    @GetMapping("/users/{userId}/events/{eventId}/requests")
+    @GetMapping("/{eventId}/requests")
     public List<ParticipationRequestDto> getRequestsByUserAndEvent(@PathVariable @Positive Long userId,
                                                                    @PathVariable @Positive Long eventId) {
         log.info("Запрос получения запросов на участие в событии по id - {} пользователем по id - {}",
@@ -64,13 +64,13 @@ public class PrivateEventController {
         return service.getRequestsByUserAndEvent(userId, eventId);
     }
 
-    @PatchMapping("/users/{userId}/events/{eventId}/requests")
+    @PatchMapping("/{eventId}/requests")
     public EventRequestStatusUpdateResult updateRequestsByUserAndEvent(
             @RequestBody EventRequestStatusUpdateRequest updateRequest,
             @PathVariable @Positive Long userId,
             @PathVariable @Positive Long eventId) {
         log.info("Запрос на обновления статусов запросов на событие по id - {} пользователем с id - {} - {}",
                 eventId, userId , updateRequest);
-        return service.updateRequestsStatusByUserAndEvent(userId, eventId);
+        return service.updateRequestsStatusByUserAndEvent(userId, eventId, updateRequest);
     }
 }

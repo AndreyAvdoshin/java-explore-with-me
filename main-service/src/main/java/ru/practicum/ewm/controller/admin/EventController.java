@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.EventFullDto;
+import ru.practicum.ewm.dto.SearchAdminParameters;
 import ru.practicum.ewm.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.service.EventService;
 
@@ -24,9 +25,9 @@ public class EventController {
     }
 
     @GetMapping
-    public List<EventFullDto> getEvents() {
-        // необходимо дописать запрос событий
-        return null;
+    public List<EventFullDto> getEvents(@RequestParam @Valid SearchAdminParameters params) {
+        log.info("Запрос админа на предоставление событий по параметрам - {}", params);
+        return service.getEventsByAdmin(params);
     }
 
     @PatchMapping("/{eventId}")

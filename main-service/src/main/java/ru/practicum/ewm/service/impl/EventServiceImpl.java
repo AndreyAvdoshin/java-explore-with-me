@@ -2,19 +2,24 @@ package ru.practicum.ewm.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.client.StatsClient;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.exception.ConflictParameterException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.NotOwnerException;
+import ru.practicum.ewm.exception.OverLimitException;
 import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.EventRepository;
+import ru.practicum.ewm.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.service.CategoryService;
 import ru.practicum.ewm.service.EventService;
-import ru.practicum.ewm.service.ParticipationRequestService;
 import ru.practicum.ewm.service.UserService;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,14 +30,17 @@ public class EventServiceImpl implements EventService {
     private final EventRepository repository;
     private final UserService userService;
     private final CategoryService categoryService;
-    private final ParticipationRequestService requestService;
+    private final ParticipationRequestRepository requestRepository;
+    private final StatsClient client;
 
     public EventServiceImpl(EventRepository repository, UserService userService,
-                            CategoryService categoryService, ParticipationRequestService requestService) {
+                            CategoryService categoryService, ParticipationRequestRepository requestRepository,
+                            StatsClient client) {
         this.repository = repository;
         this.userService = userService;
         this.categoryService = categoryService;
-        this.requestService = requestService;
+        this.requestRepository = requestRepository;
+        this.client = client;
     }
 
     @Override
@@ -52,6 +60,68 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public EventFullDto getEventById(Long eventId, HttpServletRequest request) {
+        Event event = returnIfExists(eventId);
+
+        if (event.getState() != State.PUBLISHED) {
+            throw new NotFoundException("event", eventId);
+        }
+
+        addStats(request);
+
+        event.setViews(event.getViews() + 1);
+        repository.save(event);
+
+        log.info("Получение события по id - {} - {}", eventId, event);
+        return EventMapper.toEventFullDto(event);
+    }
+
+    @Override
+    public List<EventShortDto> getEvents(SearchParameters params, HttpServletRequest request) {
+        PageRequest page = PageRequest.of(params.getFrom() / params.getSize(), params.getSize());
+        addStats(request);
+
+        Specification<Event> spec = Specification
+                .where(SearchSpecs.searchByText(params.getText()))
+                .and(SearchSpecs.searchCategories(params.getCategories()))
+                .and(SearchSpecs.isPaid(params.getPaid()))
+                .and(SearchSpecs.rangeStart(params.getRangeStart()))
+                .and(SearchSpecs.rangeEnd(params.getRangeEnd()))
+                .and(SearchSpecs.onlyAvailable(params.isOnlyAvailable()))
+                .and(SearchSpecs.sortBy(params.getSort()));
+
+        List<Event> events = repository.findAll(spec, page).getContent();
+        events = events.stream()
+                .peek(e -> e.setViews(e.getViews() + 1))
+                .collect(Collectors.toList());
+
+        log.info("Получение всех событий - {}", events);
+        return repository.saveAll(events).stream()
+                .map(EventMapper::toEventShortDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventFullDto> getEventsByAdmin(SearchAdminParameters params) {
+        checkParamDateTime(params);
+
+        PageRequest page = PageRequest.of(params.getFrom() / params.getSize(), params.getSize());
+        Specification<Event> spec = Specification
+                .where(SearchSpecs.searchByUserIds(params.getUsers()))
+                .and(SearchSpecs.searchStates(params.getStates()))
+                .and(SearchSpecs.searchCategories(params.getCategories()))
+                .and(SearchSpecs.rangeStart(params.getRangeStart()))
+                .and(SearchSpecs.rangeEnd(params.getRangeEnd()));
+
+        List<Event> events = repository.findAll(spec, page).getContent();
+
+        log.info("Получение всех событий администратором - {} по параметрам - {}", events, params);
+        return events.stream()
+                .map(EventMapper::toEventFullDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<EventShortDto> getEventsByUserId(Long userId, int from, int size) {
         userService.checkExistingUser(userId);
         PageRequest page = PageRequest.of(from / size, size);
@@ -67,6 +137,11 @@ public class EventServiceImpl implements EventService {
 
         log.info("Получение события - {}", event);
         return EventMapper.toEventFullDto(event);
+    }
+
+    @Override
+    public void updateEvent(Event event) {
+        repository.save(event);
     }
 
     @Override
@@ -92,13 +167,58 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<ParticipationRequestDto> getRequestsByUserAndEvent(Long userId, Long eventId) {
         checkEventBelongUser(eventId, userId);
-        return requestService.getRequestsByEventId(eventId);
+        List<ParticipationRequest> requests = requestRepository.findAllByEventId(eventId);
+        log.info("Получение всех зпросов на участие по id - {} - {}", eventId, requests);
+
+        return requests.stream()
+                .map(ParticipationRequestMapper::toParticipationRequestDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public EventRequestStatusUpdateResult updateRequestsStatusByUserAndEvent(Long userId, Long eventId) {
-        checkEventBelongUser(eventId, userId);
-        return null;
+    public EventRequestStatusUpdateResult updateRequestsStatusByUserAndEvent(Long userId, Long eventId,
+                                                              EventRequestStatusUpdateRequest updateRequest) {
+        Event event = checkEventBelongUser(eventId, userId);
+        List<ParticipationRequest> requests = requestRepository.findAllByEventId(eventId);
+        int countConfirmedRequests = requestRepository.countAllByEventIdAndStatus(eventId, State.CONFIRMED);
+        int countParticipantLimit = event.getParticipantLimit();
+
+        List<ParticipationRequest> confirmedRequests = getRequestsByStatus(requests, State.CONFIRMED);
+        List<ParticipationRequest> rejectedRequests = getRequestsByStatus(requests, State.REJECTED);
+
+        List<ParticipationRequest> updateRequests = getUpdateRequests(requests, updateRequest.getRequestIds());
+
+        switch (updateRequest.getStatus()) {
+            case CONFIRMED:
+                if (countConfirmedRequests == event.getParticipantLimit() && event.getParticipantLimit() != 0) {
+                    throw new OverLimitException("Достигнут лимит на участие в событии");
+                }
+
+                for (ParticipationRequest request : updateRequests) {
+                    if (countConfirmedRequests != countParticipantLimit) {
+                        request.setStatus(State.CONFIRMED);
+                        countConfirmedRequests++;
+                        confirmedRequests.add(request);
+                    } else {
+                        request.setStatus(State.REJECTED);
+                        rejectedRequests.add(request);
+                    }
+                }
+                break;
+            case REJECTED:
+                updateRequests.forEach(r -> {
+                            r.setStatus(State.REJECTED);
+                            rejectedRequests.add(r);
+                        });
+        }
+
+        event.setConfirmedRequests(countConfirmedRequests);
+        repository.save(event);
+        requestRepository.saveAll(updateRequests);
+
+        return new EventRequestStatusUpdateResult(
+                ParticipationRequestMapper.toParticipationRequestDtos(confirmedRequests),
+                ParticipationRequestMapper.toParticipationRequestDtos(rejectedRequests));
     }
 
     @Override
@@ -112,6 +232,14 @@ public class EventServiceImpl implements EventService {
                     "Начало события должно быть не раньше, чем за 2 часа от текущего времени");
         } else if (event.getEventDate().isBefore(LocalDateTime.now())) {
             throw new ConflictParameterException("eventDate", "Начало события не может быть в прошлом");
+        }
+    }
+
+    private void checkParamDateTime(SearchParameters param) {
+        if (param.getRangeStart() != null && param.getRangeEnd() != null) {
+            if (param.getRangeEnd().isBefore(param.getRangeStart())) {
+                throw new ConflictParameterException("range", "Время окончания не может быть раньше даты начала");
+            }
         }
     }
 
@@ -188,5 +316,29 @@ public class EventServiceImpl implements EventService {
                     event.setState(State.PENDING);
             }
         }
+    }
+
+    private List<ParticipationRequest> getRequestsByStatus(List<ParticipationRequest> requests, State status) {
+        return requests.stream()
+                .filter(r -> r.getStatus() == status)
+                .collect(Collectors.toList());
+    }
+
+    private List<ParticipationRequest> getUpdateRequests(List<ParticipationRequest> requests, List<Long> requestIds) {
+        return requests.stream()
+                .filter(r -> requestIds.contains(r.getId()))
+                .peek(r -> {
+                    if (r.getStatus() != State.PENDING) {
+                        throw new ConflictParameterException("state", "Зпрос должен иметь статус PENDING");
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+    private void addStats(HttpServletRequest request) {
+        final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        client.createHit("ewm-service", request.getRequestURI(), request.getRemoteAddr(),
+                LocalDateTime.now().format(FORMATTER));
     }
 }

@@ -67,6 +67,19 @@ public class ErrorResponse {
                 .build();
     }
 
+    @ExceptionHandler(OverLimitException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError overLimitException(final OverLimitException e) {
+        log.error("Достигнут лимит участников по заявке");
+
+        return ApiError.builder()
+                .status(HttpStatus.CONFLICT)
+                .reason("Достигнут лимит участников по заявке")
+                .message(e.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
 //    @ExceptionHandler(IncorrectParameterException.class)
 //    @ResponseStatus(HttpStatus.BAD_REQUEST)
 //    public ApiError incorrectParameterException(IncorrectParameterException e) {

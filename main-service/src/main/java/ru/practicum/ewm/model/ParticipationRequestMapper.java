@@ -3,6 +3,9 @@ package ru.practicum.ewm.model;
 import lombok.experimental.UtilityClass;
 import ru.practicum.ewm.dto.ParticipationRequestDto;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @UtilityClass
 public class ParticipationRequestMapper {
     public static ParticipationRequestDto toParticipationRequestDto(ParticipationRequest participationRequest) {
@@ -13,4 +16,16 @@ public class ParticipationRequestMapper {
                 .status(participationRequest.getStatus())
                 .build();
     }
+
+    public static List<ParticipationRequestDto> toParticipationRequestDtos(List<ParticipationRequest> requests) {
+        return requests.stream()
+                .map(r -> ParticipationRequestDto.builder()
+                        .created(r.getCreated())
+                        .event(r.getEvent().getId())
+                        .requester(r.getRequester().getId())
+                        .status(r.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }

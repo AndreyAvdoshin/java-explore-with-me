@@ -57,12 +57,9 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
         if (event.getInitiator().equals(requester)) {
             throw new ConflictParameterException("userId", "Нельзя добавить запрос на собственное событие");
-        } else if (event.getState() != State.PUBLISHED) {
-            throw new ConflictParameterException("state", "Нельзя добавить запрос на неопубликованное событие");
-        } else if (event.getParticipantLimit() != 0 &&
-                repository.countAllByEventId(eventId) >= event.getParticipantLimit()) {
-            throw new ConflictParameterException("participantLimit", "Превышен лимит на участие в событии");
         }
+
+        checkEventParam(event);
 
         ParticipationRequest participationRequest = ParticipationRequest.builder()
                 .created(LocalDateTime.now())
@@ -71,16 +68,14 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .status(event.isRequestModeration() ? State.PENDING : State.CONFIRMED)
                 .build();
 
+        // Увеличиваем счетчк в событии, если статсус запроса подтвержден
+        if (participationRequest.getStatus() == State.CONFIRMED) {
+            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+            eventService.updateEvent(event);
+        }
+
         log.info("Созранине запроса на участие в событии - {}", participationRequest);
         return ParticipationRequestMapper.toParticipationRequestDto(repository.save(participationRequest));
-    }
-
-    @Override
-    public List<ParticipationRequestDto> updateRequestsStatusByEvent(Long eventId) {
-        List<ParticipationRequest> requests = repository.findAllByEventId(eventId);
-
-        return  null;
-
     }
 
     @Override
@@ -90,13 +85,29 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
         if (!request.getRequester().getId().equals(userId)) {
             throw new ConflictParameterException("requester", "Нельзя отменять не свой запрос на участие");
-        } else {
-            request.setStatus(State.PENDING);
         }
+
+        // Если отменяется уже подтвержденный запрос, то обновляем счетчик в событии
+        if (request.getStatus() == State.CONFIRMED) {
+            Event event = request.getEvent();
+            event.setConfirmedRequests(event.getConfirmedRequests() - 1);
+            eventService.updateEvent(event);
+        }
+
+        request.setStatus(State.CANCELED);
 
         log.info("Сохранение отмененного запроса на участие - {}", request);
         return ParticipationRequestMapper.toParticipationRequestDto(repository.save(request));
 
+    }
+
+    private void checkEventParam(Event event) {
+        if (event.getState() != State.PUBLISHED) {
+            throw new ConflictParameterException("state", "Нельзя добавить запрос на неопубликованное событие");
+        } else if (event.getParticipantLimit() != 0 &&
+                repository.countAllByEventIdAndStatus(event.getId(), State.CONFIRMED) >= event.getParticipantLimit()) {
+            throw new ConflictParameterException("participantLimit", "Превышен лимит на участие в событии");
+        }
     }
 
     private ParticipationRequest returnIfExists(Long requestId) {
