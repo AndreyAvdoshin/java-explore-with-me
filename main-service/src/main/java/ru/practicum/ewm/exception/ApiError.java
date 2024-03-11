@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @Builder
 public class ApiError {
-    private List<String> errors;
+    private List<StackTraceElement> errors;
     private final HttpStatus status;
     private final String reason;
     private final String message;
