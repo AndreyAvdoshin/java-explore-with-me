@@ -43,16 +43,6 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .collect(Collectors.toList());
     }
 
-//    @Override
-//    public List<ParticipationRequestDto> getRequestsByEventId(Long eventId) {
-//        List<ParticipationRequest> requests = repository.findAllByEventId(eventId);
-//        log.info("Возврат запросов события по id - {} - {}", eventId, requests);
-//
-//        return requests.stream()
-//                .map(ParticipationRequestMapper::toParticipationRequestDto)
-//                .collect(Collectors.toList());
-//    }
-
     @Override
     public ParticipationRequestDto createRequest(Long userId, Long eventId) {
         Event event = eventService.returnIfExists(eventId);
