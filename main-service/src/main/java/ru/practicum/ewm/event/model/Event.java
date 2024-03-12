@@ -1,9 +1,6 @@
 package ru.practicum.ewm.event.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.util.State;
 import ru.practicum.ewm.user.model.User;
@@ -11,7 +8,8 @@ import ru.practicum.ewm.user.model.User;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Builder
 @Entity
 @Table(name = "events")

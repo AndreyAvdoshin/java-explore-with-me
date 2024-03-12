@@ -14,7 +14,7 @@ import java.util.List;
 
 @Slf4j
 @RestControllerAdvice
-public class ErrorResponse {
+public class ErrorHandler {
 
     @ExceptionHandler({MethodArgumentNotValidException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)

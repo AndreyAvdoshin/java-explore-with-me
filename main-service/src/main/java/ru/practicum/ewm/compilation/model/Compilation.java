@@ -1,25 +1,20 @@
 package ru.practicum.ewm.compilation.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.util.BaseEntity;
 
 import javax.persistence.*;
 import java.util.Set;
 
+@Getter
+@Setter
 @Entity
-@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "compilations")
-public class Compilation {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Compilation extends BaseEntity {
 
     @Column(name = "pinned")
     private boolean pinned;
