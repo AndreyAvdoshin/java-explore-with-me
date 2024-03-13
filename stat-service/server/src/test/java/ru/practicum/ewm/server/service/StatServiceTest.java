@@ -14,6 +14,7 @@ import ru.practicum.ewm.server.model.Hit;
 import ru.practicum.ewm.server.model.Stats;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -29,6 +30,8 @@ class StatServiceTest {
 
     @Mock
     StatRepository statRepository;
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private Hit hit;
     private Stats stats;
@@ -93,8 +96,8 @@ class StatServiceTest {
                 .thenReturn(List.of(stats, stats2));
 
         List<ViewStatsDto> statsDtos = statService.getStats(
-                LocalDateTime.of(2024, 1, 1, 0, 0),
-                LocalDateTime.now(), null, false);
+                LocalDateTime.of(2024, 1, 1, 0, 0).format(FORMATTER),
+                LocalDateTime.now().format(FORMATTER), null, false);
 
         assertEquals(statsDtos, List.of(viewStatsDto, viewStatsDto2));
     }
@@ -105,8 +108,8 @@ class StatServiceTest {
                 .thenReturn(List.of(stats, stats2));
 
         List<ViewStatsDto> statsDtos = statService.getStats(
-                LocalDateTime.of(2024, 1, 1, 0, 0),
-                LocalDateTime.now(), null, true);
+                LocalDateTime.of(2024, 1, 1, 0, 0).format(FORMATTER),
+                LocalDateTime.now().format(FORMATTER), null, true);
 
         assertEquals(statsDtos, List.of(viewStatsDto, viewStatsDto2));
     }
@@ -117,8 +120,8 @@ class StatServiceTest {
                 .thenReturn(List.of(stats));
 
         List<ViewStatsDto> statsDtos = statService.getStats(
-                LocalDateTime.of(2024, 1, 1, 0, 0),
-                LocalDateTime.now(), List.of(stats.getUri()), true);
+                LocalDateTime.of(2024, 1, 1, 0, 0).format(FORMATTER),
+                LocalDateTime.now().format(FORMATTER), List.of(stats.getUri()), true);
 
         assertEquals(statsDtos, List.of(viewStatsDto));
 
@@ -130,8 +133,8 @@ class StatServiceTest {
                 .thenReturn(List.of(stats2));
 
         List<ViewStatsDto> statsDtos = statService.getStats(
-                LocalDateTime.of(2024, 1, 1, 0, 0),
-                LocalDateTime.now(), List.of(stats2.getUri()), true);
+                LocalDateTime.of(2024, 1, 1, 0, 0).format(FORMATTER),
+                LocalDateTime.now().format(FORMATTER), List.of(stats2.getUri()), true);
 
         assertEquals(statsDtos, List.of(viewStatsDto2));
 

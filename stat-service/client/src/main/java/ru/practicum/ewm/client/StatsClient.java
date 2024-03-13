@@ -1,5 +1,6 @@
 package ru.practicum.ewm.client;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -13,10 +14,12 @@ import ru.practicum.ewm.dto.ViewStatsDto;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class StatsClient extends BaseClient {
 
@@ -32,10 +35,11 @@ public class StatsClient extends BaseClient {
         );
     }
 
-    public ResponseEntity<EndpointHitDto> createHit(String app, String uri, String ip, String timestamp) {
-        EndpointHitDto hit = new EndpointHitDto(app, uri, ip, LocalDateTime.parse(timestamp));
+    public void createHit(String app, String uri, String ip, String timestamp) {
+        EndpointHitDto hit = new EndpointHitDto(app, uri, ip, LocalDateTime.parse(timestamp,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 
-        return post("/hit", hit);
+        post("/hit", hit);
     }
 
     public ResponseEntity<List<ViewStatsDto>> getStats(String start, String end, List<String> uris, Boolean unique) {
@@ -44,7 +48,8 @@ public class StatsClient extends BaseClient {
                 "unique", unique));
 
         if (uris != null) {
-            parameters.put("uris", uris);
+
+            parameters.put("uris", String.join(",", uris));
             return get(STATS_API_PREFIX + "&uris={uris}", parameters);
         }
         return get(STATS_API_PREFIX, parameters);

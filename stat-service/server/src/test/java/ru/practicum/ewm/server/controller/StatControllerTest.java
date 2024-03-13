@@ -74,11 +74,11 @@ class StatControllerTest {
 
     @Test
     void shouldGetStats() throws Exception {
-        String start = LocalDateTime.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        String end = LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String start = LocalDateTime.now().minusDays(1).format(FORMATTER);
+        String end = LocalDateTime.now().plusDays(1).format(FORMATTER);
         List<String> uris = List.of(endpointHitDto.getUri());
 
-        when(statService.getStats(any(LocalDateTime.class), any(LocalDateTime.class), any(List.class),
+        when(statService.getStats(any(String.class), any(String.class), any(List.class),
                 any(Boolean.class))).thenReturn(List.of(viewStatsDto));
 
         mvc.perform(get("/stats")
