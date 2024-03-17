@@ -2,8 +2,8 @@ package ru.practicum.ewm.event.dto;
 
 import lombok.*;
 import ru.practicum.ewm.category.dto.CategoryDto;
+import ru.practicum.ewm.location.dto.LocationDto;
 import ru.practicum.ewm.user.dto.UserShortDto;
-import ru.practicum.ewm.event.model.Location;
 import ru.practicum.ewm.util.State;
 import java.time.LocalDateTime;
 
@@ -14,7 +14,7 @@ public class EventFullDto extends EventShortDto {
 
     private LocalDateTime createdOn;
     private String description;
-    private Location location;
+    private LocationDto location;
     private int participantLimit;
     private LocalDateTime publishedOn;
     private boolean requestModeration;
@@ -32,7 +32,7 @@ public class EventFullDto extends EventShortDto {
                         Long views,
                         LocalDateTime createdOn,
                         String description,
-                        Location location,
+                        LocationDto location,
                         int participantLimit,
                         LocalDateTime publishedOn,
                         boolean requestModeration,

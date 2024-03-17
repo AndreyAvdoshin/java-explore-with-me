@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.ewm.event.model.Location;
+import ru.practicum.ewm.location.dto.LocationShortDto;
 import ru.practicum.ewm.util.StateAction;
 
 import javax.validation.constraints.FutureOrPresent;
@@ -31,7 +31,7 @@ public class UpdateEventUserRequest {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
-    private Location location;
+    private LocationShortDto location;
 
     private Boolean paid;
 
