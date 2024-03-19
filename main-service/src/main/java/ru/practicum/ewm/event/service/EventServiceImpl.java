@@ -15,6 +15,8 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventMapper;
 import ru.practicum.ewm.exception.*;
 import ru.practicum.ewm.event.repository.EventRepository;
+import ru.practicum.ewm.location.model.Location;
+import ru.practicum.ewm.location.service.LocationService;
 import ru.practicum.ewm.request.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.category.service.CategoryService;
 import ru.practicum.ewm.request.dto.EventRequestStatusUpdateRequest;
@@ -46,16 +48,18 @@ public class EventServiceImpl implements EventService {
     private final EventRepository repository;
     private final UserService userService;
     private final CategoryService categoryService;
+    private final LocationService locationService;
     private final ParticipationRequestRepository requestRepository;
     private final StatsClient client;
     private final ObjectMapper objectMapper;
 
-    public EventServiceImpl(EventRepository repository, UserService userService,
-                            CategoryService categoryService, ParticipationRequestRepository requestRepository,
+    public EventServiceImpl(EventRepository repository, UserService userService, CategoryService categoryService,
+                            ParticipationRequestRepository requestRepository, LocationService locationService,
                             StatsClient client, ObjectMapper objectMapper) {
         this.repository = repository;
         this.userService = userService;
         this.categoryService = categoryService;
+        this.locationService = locationService;
         this.requestRepository = requestRepository;
         this.client = client;
         this.objectMapper = objectMapper;
@@ -68,9 +72,11 @@ public class EventServiceImpl implements EventService {
 
         User initiator = userService.returnIfExists(userId);
         Category category = categoryService.returnIfExists(newEventDto.getCategory());
+        Location location = locationService.createOrReturn(newEventDto.getLocation());
 
         event.setInitiator(initiator);
         event.setCategory(category);
+        event.setLocation(location);
         event = repository.save(event);
 
         log.info("Сохранение события - {}", event);
@@ -164,6 +170,23 @@ public class EventServiceImpl implements EventService {
 
         log.info("Получение события - {}", event);
         return EventMapper.toEventFullDto(event);
+    }
+
+    @Override
+    public List<EventShortDto> getEventsByLocation(double lat, double lon, Integer radius) {
+        List<Event> events;
+
+        // если радиус задан, то ищем по локациям, которые попадают в радиус координат
+        if (radius != null) {
+            events = repository.findAllEventsByLocationAndRadius(lat, lon, radius);
+        } else { // если радиус не задан, то ищем по ранее добавленному радиусу или по координатам
+            events = repository.findAllEventsByLocation(lat, lon);
+        }
+
+        log.info("Получение списака событий по координатам локации - {}", events);
+        return events.stream()
+                .map(EventMapper::toEventShortDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -313,7 +336,7 @@ public class EventServiceImpl implements EventService {
                 updateRequest.getDescription() : event.getDescription());
 
         event.setLocation(updateRequest.getLocation() != null ?
-                updateRequest.getLocation() : event.getLocation());
+                locationService.createOrReturn(updateRequest.getLocation()) : event.getLocation());
 
         event.setPaid(updateRequest.getPaid() != null ?
                 updateRequest.getPaid() : event.isPaid());

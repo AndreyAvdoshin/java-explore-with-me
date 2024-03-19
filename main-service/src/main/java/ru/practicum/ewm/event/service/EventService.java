@@ -25,6 +25,8 @@ public interface EventService {
 
     EventFullDto getEventByIdAndUserId(Long eventId, Long userId);
 
+    List<EventShortDto> getEventsByLocation(double lat, double lon, Integer radius);
+
     EventFullDto updateEventByIdAndUserId(Long eventId, Long userId, UpdateEventUserRequest updateEventUserRequest);
 
     EventFullDto updateEventByIdAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest);

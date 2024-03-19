@@ -5,7 +5,7 @@ import lombok.Getter;
 @Getter
 public class ConflictParameterException extends RuntimeException {
 
-    private String field;
+    private final String field;
 
     public ConflictParameterException(String field, String message) {
         super(message);

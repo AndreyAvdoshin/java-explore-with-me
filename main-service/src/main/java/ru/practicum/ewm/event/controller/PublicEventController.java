@@ -10,6 +10,7 @@ import ru.practicum.ewm.event.service.EventService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import java.util.List;
 
@@ -38,4 +39,11 @@ public class PublicEventController {
         return service.getEvents(params, request);
     }
 
+    @GetMapping("/locations")
+    public List<EventShortDto> getEventsByLatAndLon(@RequestParam @NotNull Double lat,
+                                                    @RequestParam @NotNull Double lon,
+                                                    @RequestParam(required = false) Integer radius) {
+        log.info("Публичный запрос на получение событий по локации и радиусу - {} - {} - {}", lat, lon, radius);
+        return service.getEventsByLocation(lat, lon, radius);
+    }
 }

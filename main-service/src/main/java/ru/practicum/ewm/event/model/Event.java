@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.model;
 
 import lombok.*;
 import ru.practicum.ewm.category.model.Category;
+import ru.practicum.ewm.location.model.Location;
 import ru.practicum.ewm.util.State;
 import ru.practicum.ewm.user.model.User;
 
@@ -44,7 +45,8 @@ public class Event {
     @JoinColumn(name = "initiator_id")
     private User initiator;
 
-    @Embedded
+    @ManyToOne
+    @JoinColumn(name = "location_id")
     private Location location;
 
     @Column(name = "paid")

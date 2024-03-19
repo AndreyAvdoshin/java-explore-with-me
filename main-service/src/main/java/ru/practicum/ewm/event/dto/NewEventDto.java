@@ -3,7 +3,7 @@ package ru.practicum.ewm.event.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
-import ru.practicum.ewm.event.model.Location;
+import ru.practicum.ewm.location.dto.LocationShortDto;
 
 import javax.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -28,7 +28,7 @@ public class NewEventDto {
     private LocalDateTime eventDate;
 
     @NotNull
-    private Location location;
+    private LocationShortDto location;
 
     private boolean paid;
 
